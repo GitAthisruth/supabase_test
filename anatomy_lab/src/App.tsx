@@ -1,13 +1,29 @@
 import "./App.css";
+import { useState } from "react";
+import { supabase } from "./supabase-client";
+
 
 function App() {
+  const [newTask, setNewTask] = useState({ title: "", description: "" });
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
+    const { error } = await supabase.from("tasks").insert(newTask).single();
+    if (error) {
+      console.error("Error adding task:", error.message);
+      alert("Error adding task");
+    } else {
+      setNewTask({ title: "", description: "" });
+      alert("Task added successfully");
+    }
+  };
+
   return (
     <div style={{ maxWidth: "600px", margin: "0 auto", padding: "1rem" }}>
       <h2>Task Manager CRUD</h2>
-      <form style={{ marginBottom: "1rem" }}>
-        <input type="text" placeholder="Task Title"
+      <form onSubmit={handleSubmit} style={{ marginBottom: "1rem" }}>
+        <input type="text" placeholder="Task Title" onChange={(e) => setNewTask((prev) => ({ ...prev, title: e.target.value }))}
           style={{ width: "100%", marginBottom: "0.5rem", padding: "0.5rem" }} />
-        <textarea placeholder="Task Description" style={{ width: "100%", marginBottom: "0.5rem", padding: "0.5rem" }} />
+        <textarea placeholder="Task Description" onChange={(e) => setNewTask((prev) => ({ ...prev, description: e.target.value }))} style={{ width: "100%", marginBottom: "0.5rem", padding: "0.5rem" }} />
         <button type="submit" style={{ padding: "0.5rem 1rem" }}>
           Add Task
         </button>
