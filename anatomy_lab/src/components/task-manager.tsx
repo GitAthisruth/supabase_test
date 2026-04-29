@@ -104,8 +104,8 @@ function TaskManager({ session }: { session: Session }) {
     }, []);
 
     useEffect(() => {
-        const channel = supabase
-            .channel("realtime:tasks-channel")
+        const channel = supabase.channel("tasks-channel");
+        channel
             .on(
                 "postgres_changes",
                 { event: "INSERT", schema: "public", table: "tasks" },
@@ -117,10 +117,6 @@ function TaskManager({ session }: { session: Session }) {
             .subscribe((status) => {
                 console.log("Subscription: ", status);
             });
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
     }, []);
 
     console.log(tasks);

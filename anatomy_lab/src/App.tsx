@@ -15,11 +15,11 @@ function App() {
 
   useEffect(() => {
     fetchSession();
-  }, []);
+  });
 
   return (
     <>
-      {session?.session ? <TaskManager session={session.session} /> : null}
+      <TaskManager />
       <Auth />
     </>
   );
