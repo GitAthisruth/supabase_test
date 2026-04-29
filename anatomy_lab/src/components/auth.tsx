@@ -10,25 +10,24 @@ export const Auth = () => {
         e.preventDefault();
 
         if (isSignUp) {
-            const { error: signupError } = await supabase.auth.signUp({ email, password });
-            if (signupError) {
-                console.error("Error signing up:", signupError.message)
-                return
+            const { error: signUpError } = await supabase.auth.signUp({
+                email,
+                password,
+            });
+            if (signUpError) {
+                console.error("Error signing up:", signUpError.message);
+                return;
             }
-            alert("Account Created Successfully");
         } else {
             const { error: signInError } = await supabase.auth.signInWithPassword({
                 email,
-                password
+                password,
             });
             if (signInError) {
-                console.error("Error signing in:", signInError.message)
-                return
+                console.error("Error signing up:", signInError.message);
+                return;
             }
-
-
         }
-
     };
 
     return (
