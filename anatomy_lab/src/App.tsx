@@ -9,81 +9,131 @@ interface Task {
   created_at: string;
 }
 
-
 function App() {
   const [newTask, setNewTask] = useState({ title: "", description: "" });
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [newDescription, setNewDescription] = useState<string>("");
+
   const fetchTasks = async () => {
-    const { error, data } = await supabase.from("tasks").select("*").order("created_at", { ascending: true });
+    const { error, data } = await supabase
+      .from("tasks")
+      .select("*")
+      .order("created_at", { ascending: true });
+
     if (error) {
       console.error("Error fetching tasks", error.message);
       return;
     }
-    setTasks(data);
+    setTasks(data || []);
   };
 
   const deleteTask = async (id: number) => {
     const { error } = await supabase.from("tasks").delete().eq("id", id);
+
     if (error) {
       console.error("Error deleting task:", error.message);
       alert("Error deleting task");
     } else {
-      setNewTask({ title: "", description: "" });
       alert("Task deleted successfully");
+      fetchTasks(); // ✅ refresh
     }
   };
 
-  const handleSubmit = async (e: any) => {
+  const updateTask = async (id: number) => {
+    if (!newDescription.trim()) {
+      alert("Description cannot be empty");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("tasks")
+      .update({ description: newDescription })
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error updating task:", error.message);
+      alert("Error updating task");
+    } else {
+      alert("Task updated successfully");
+      setNewDescription(""); // ✅ reset correctly
+      fetchTasks(); // ✅ refresh
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { error } = await supabase.from("tasks").insert(newTask).single();
+
+    if (!newTask.title.trim()) {
+      alert("Title is required");
+      return;
+    }
+
+    const { error } = await supabase.from("tasks").insert(newTask);
+
     if (error) {
       console.error("Error adding task:", error.message);
       alert("Error adding task");
     } else {
-      setNewTask({ title: "", description: "" });
       alert("Task added successfully");
+      setNewTask({ title: "", description: "" });
+      fetchTasks(); // ✅ refresh
     }
   };
 
   useEffect(() => {
     fetchTasks();
   }, []);
-  console.log(tasks);
 
   return (
     <div style={{ maxWidth: "600px", margin: "0 auto", padding: "1rem" }}>
       <h2>Task Manager CRUD</h2>
+
       <form onSubmit={handleSubmit} style={{ marginBottom: "1rem" }}>
-        <input type="text" placeholder="Task Title" onChange={(e) => setNewTask((prev) => ({ ...prev, title: e.target.value }))}
-          style={{ width: "100%", marginBottom: "0.5rem", padding: "0.5rem" }} />
-        <textarea placeholder="Task Description" onChange={(e) => setNewTask((prev) => ({ ...prev, description: e.target.value }))} style={{ width: "100%", marginBottom: "0.5rem", padding: "0.5rem" }} />
-        <button type="submit" style={{ padding: "0.5rem 1rem" }}>
-          Add Task
-        </button>
+        <input
+          type="text"
+          placeholder="Task Title"
+          value={newTask.title}
+          onChange={(e) =>
+            setNewTask((prev) => ({ ...prev, title: e.target.value }))
+          }
+          style={{ width: "100%", marginBottom: "0.5rem", padding: "0.5rem" }}
+        />
+
+        <textarea
+          placeholder="Task Description"
+          value={newTask.description}
+          onChange={(e) =>
+            setNewTask((prev) => ({ ...prev, description: e.target.value }))
+          }
+          style={{ width: "100%", marginBottom: "0.5rem", padding: "0.5rem" }}
+        />
+
+        <button type="submit">Add Task</button>
       </form>
 
-      {/* Map through the tasks array */}
       <ul style={{ listStyleType: "none", padding: "0" }}>
-        {tasks.map((task, key) => (
+        {tasks.map((task) => (
           <li
-            key={key}
+            key={task.id} // ✅ fixed
             style={{
               border: "1px solid #ccc",
               borderRadius: "4px",
               padding: "1rem",
-              marginBottom: "0.5rem"
-            }}>
+              marginBottom: "0.5rem",
+            }}
+          >
+            <h3>{task.title}</h3>
+            <p>{task.description}</p>
+
+            <textarea
+              value={newDescription}
+              onChange={(e) => setNewDescription(e.target.value)}
+              placeholder="Updated description..."
+            />
+
             <div>
-              <h3>{task.title}</h3>
-              <p>{task.description}</p>
-              <div>
-                <button style={{ padding: "0.5rem 1rem", marginRight: "0.5rem" }}>
-                  Edit
-                </button>
-                <button onClick={() => deleteTask(task.id)} style={{ padding: "0.5rem 1rem" }}>
-                  Delete
-                </button>
-              </div>
+              <button onClick={() => updateTask(task.id)}>Edit</button>
+              <button onClick={() => deleteTask(task.id)}>Delete</button>
             </div>
           </li>
         ))}
