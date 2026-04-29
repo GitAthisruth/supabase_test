@@ -82,7 +82,7 @@ function TaskManager({ session }: { session: Session }) {
 
         const { error } = await supabase
             .from("tasks")
-            .insert({ ...newTask, email: session.user.email }).single()
+            .insert({ ...newTask, email: session.user.email, image_url: imageUrl }).select().single()
 
         if (error) {
             console.error("Error adding task: ", error.message);
