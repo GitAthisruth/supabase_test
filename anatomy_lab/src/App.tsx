@@ -6,21 +6,32 @@ import { supabase } from "./supabase-client";
 
 function App() {
   const [session, setSession] = useState<any>(null);
-
   const fetchSession = async () => {
     const currentSession = await supabase.auth.getSession();
-    console.log(currentSession);
-    setSession(currentSession.data);
+    setSession(currentSession.data.session);
   };
+
 
   useEffect(() => {
     fetchSession();
-  });
+  }, []);
+
+  const logout = async () => {
+    await supabase.auth.signOut();
+
+  };
 
   return (
     <>
-      <TaskManager />
-      <Auth />
+      {session ? (
+        <>
+
+          <button onClick={logout}>Logout</button>
+          <TaskManager session={session} />
+        </>
+      ) : (
+        <Auth />
+      )}
     </>
   );
 }

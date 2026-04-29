@@ -1,4 +1,5 @@
-import { ChangeEvent, useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import type { ChangeEvent } from "react";
 import { supabase } from "../supabase-client";
 import type { Session } from "@supabase/supabase-js";
 
@@ -104,8 +105,8 @@ function TaskManager({ session }: { session: Session }) {
     }, []);
 
     useEffect(() => {
-        const channel = supabase.channel("tasks-channel");
-        channel
+        const channel = supabase
+            .channel("realtime:tasks-channel")
             .on(
                 "postgres_changes",
                 { event: "INSERT", schema: "public", table: "tasks" },
@@ -117,6 +118,10 @@ function TaskManager({ session }: { session: Session }) {
             .subscribe((status) => {
                 console.log("Subscription: ", status);
             });
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, []);
 
     console.log(tasks);
