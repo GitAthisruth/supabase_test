@@ -1,10 +1,38 @@
 import "./App.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "./supabase-client";
+
+interface Task {
+  id: number;
+  title: string;
+  description: string;
+  created_at: string;
+}
 
 
 function App() {
   const [newTask, setNewTask] = useState({ title: "", description: "" });
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const fetchTasks = async () => {
+    const { error, data } = await supabase.from("tasks").select("*").order("created_at", { ascending: true });
+    if (error) {
+      console.error("Error fetching tasks", error.message);
+      return;
+    }
+    setTasks(data);
+  };
+
+  const deleteTask = async (id: number) => {
+    const { error } = await supabase.from("tasks").delete().eq("id", id);
+    if (error) {
+      console.error("Error deleting task:", error.message);
+      alert("Error deleting task");
+    } else {
+      setNewTask({ title: "", description: "" });
+      alert("Task deleted successfully");
+    }
+  };
+
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     const { error } = await supabase.from("tasks").insert(newTask).single();
@@ -17,6 +45,11 @@ function App() {
     }
   };
 
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+  console.log(tasks);
+
   return (
     <div style={{ maxWidth: "600px", margin: "0 auto", padding: "1rem" }}>
       <h2>Task Manager CRUD</h2>
@@ -28,27 +61,32 @@ function App() {
           Add Task
         </button>
       </form>
+
+      {/* Map through the tasks array */}
       <ul style={{ listStyleType: "none", padding: "0" }}>
-        <li
-          style={{
-            border: "1px solid #ccc",
-            borderRadius: "4px",
-            padding: "1rem",
-            marginBottom: "0.5rem"
-          }}>
-          <div>
-            <h3>Title</h3>
-            <p>Description</p>
+        {tasks.map((task, key) => (
+          <li
+            key={key}
+            style={{
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+              padding: "1rem",
+              marginBottom: "0.5rem"
+            }}>
             <div>
-              <button style={{ padding: "0.5rem 1rem", marginRight: "0.5rem" }}>
-                Edit
-              </button>
-              <button style={{ padding: "0.5rem 1rem" }}>
-                Delete
-              </button>
+              <h3>{task.title}</h3>
+              <p>{task.description}</p>
+              <div>
+                <button style={{ padding: "0.5rem 1rem", marginRight: "0.5rem" }}>
+                  Edit
+                </button>
+                <button onClick={() => deleteTask(task.id)} style={{ padding: "0.5rem 1rem" }}>
+                  Delete
+                </button>
+              </div>
             </div>
-          </div>
-        </li>
+          </li>
+        ))}
       </ul>
     </div>
   );
